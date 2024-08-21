@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 API_URL = os.getenv('API_URL')
+print(f"API_URL: {API_URL}")
 
 # Set page config
 st.set_page_config(page_title="Deep Ecology u2p050", layout="centered", initial_sidebar_state="collapsed")
