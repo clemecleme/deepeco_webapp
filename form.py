@@ -114,12 +114,12 @@ elif st.session_state.language in questions:
             # Prepare user data
             user_data = {
                 "language": st.session_state.language,
-                "name": st.session_state.answers.get(questions[st.session_state.language][0], ""),
+                "name": str(st.session_state.answers.get(questions[st.session_state.language][0], "")),
                 "age": int(st.session_state.answers.get(questions[st.session_state.language][1], "")),
-                "country": st.session_state.answers.get(questions[st.session_state.language][2], ""),
-                "profession": st.session_state.answers.get(questions[st.session_state.language][3], ""),
-                "tech_relation": st.session_state.answers.get(questions[st.session_state.language][4], ""),
-                "email": st.session_state.answers.get(questions[st.session_state.language][5], "")
+                "country": str(st.session_state.answers.get(questions[st.session_state.language][2], "")),
+                "profession": str(st.session_state.answers.get(questions[st.session_state.language][3], "")),
+                "tech_relation": int(st.session_state.answers.get(questions[st.session_state.language][4], "")),
+                "email": str(st.session_state.answers.get(questions[st.session_state.language][5], ""))
             }
             
             st.write(f"Sending request to: {API_URL}/users")
