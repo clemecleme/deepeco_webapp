@@ -112,7 +112,7 @@ elif st.session_state.language in questions:
         
         if submit_button:
             # Prepare user data
-            response = requests.post(f'{API_URL}/users', json={
+            user_data = {
                 "language": st.session_state.language,
                 "name": st.session_state.answers.get(questions[st.session_state.language][0], ""),
                 "age": st.session_state.answers.get(questions[st.session_state.language][1], ""),
@@ -120,29 +120,36 @@ elif st.session_state.language in questions:
                 "profession": st.session_state.answers.get(questions[st.session_state.language][3], ""),
                 "tech_relation": st.session_state.answers.get(questions[st.session_state.language][4], ""),
                 "email": st.session_state.answers.get(questions[st.session_state.language][5], "")
-            })
+            }
             
-            # Save user data and generate experience
-            if response.status_code == 200:
-                st.success('Data submitted successfully')
-            else:
-                st.error('Error submitting data')
+            st.write(f"Sending request to: {API_URL}/users")
+            st.write(f"Response content: {user_data}")
+            
+            try:
+                response = requests.post(f'{API_URL}/users', json=user_data)
+                st.write(f"Response status code: {response.status_code}")
+                st.write(f"Response content: {response.text}")
+
+                if response.status_code == 200:
+                    st.success('Data submitted successfully')
+                    response_data = response.json()
+                    # Thank you message
+                    thank_you_message = "Thanks, {}. Glad you're here. We'll begin shortly.".format(response["name"])
+                    if st.session_state.language == "Chinese":
+                        thank_you_message = "谢谢你, {}。很高兴你来了。我们即将开始。".format(response["name"])
+                    st.success(thank_you_message)
+
+                    # Reset button
+                    if st.button("Start New Session"):
+                        for key in ['language', 'answers']:
+                            if key in st.session_state:
+                                del st.session_state[key]
+                        st.rerun()
+                
+                else:
+                    st.error('Error submitting data')
         
-            
-            # Thank you message
-            thank_you_message = "Thanks, {}. Glad you're here. We'll begin shortly.".format(response["name"])
-            if st.session_state.language == "Chinese":
-                thank_you_message = "谢谢你, {}。很高兴你来了。我们即将开始。".format(response["name"])
-            st.success(thank_you_message)
-            
-            # Reset button
-            if st.button("Start New Session"):
-                for key in ['language', 'answers']:
-                    if key in st.session_state:
-                        del st.session_state[key]
-                st.rerun()
+            except requests.exceptions.RequestException as e:
+                st.error(f"An error occurred: {e}")
 
 st.markdown('</div>', unsafe_allow_html=True)
-
-# if __name__ == '__main__':
-#     main()
