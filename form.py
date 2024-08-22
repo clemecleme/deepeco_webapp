@@ -122,7 +122,7 @@ elif st.session_state.language in questions:
                 "email": str(st.session_state.answers.get(questions[st.session_state.language][5], ""))
             }
             
-            st.write(f"Sending request to: {API_URL}/users")
+            st.write(f"Sending request to: {API_URL}/users/")
             st.write(f"Response content: {user_data}")
             
             try:
