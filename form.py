@@ -123,9 +123,6 @@ elif st.session_state.language in questions:
                 "email": str(st.session_state.answers.get(questions[st.session_state.language][5], ""))
             }
             
-            
-            st.write(f"Response content: {user_data}")
-            
             try:
                 response = requests.post(f'{API_URL}/user_doc', json=user_data)
                 st.write(f"Sending request to: {API_URL}/user_doc")
@@ -136,11 +133,24 @@ elif st.session_state.language in questions:
                 if response.status_code == 200:
                     st.success('Data submitted successfully')
                     response_data = response.json()
+                    user_id = response_data.get('id')
+
                     # Thank you message
                     thank_you_message = "Thanks, {}. Glad you're here. We'll begin shortly.".format(response["name"])
                     if st.session_state.language == "Chinese":
                         thank_you_message = "谢谢你, {}。很高兴你来了。我们即将开始。".format(response["name"])
                     st.success(thank_you_message)
+
+                    # Start experience generation
+                    if user_id:
+                        with st.spinner('Generating your experience...'):
+                            gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": user_id})
+                            if gen_response.status_code == 200:
+                                st.success('Experience generated successfully!')
+                            else:
+                                st.error('Error generating experience')
+                    else:
+                        st.error('User ID not received from server')                    
 
                     # Reset button
                     if st.button("Start New Session"):
@@ -157,16 +167,6 @@ elif st.session_state.language in questions:
                 st.error(f"An error occurred: {e}")
                 st.error(f"Error details: {traceback.format_exc()}")
             
-            # try:
-                # response = requests.post(f"{API_URL}/generate", json={"user_id": user_id})
-                # st.write(f"Starts generation for user {"user_id": user_id}")
 
-                # if response.status_code == 200:
-                    # st.success('Data submitted successfully')
-                # else:
-                    # st.error('Error submitting data')
-
-            # except requests.exceptions.RequestException as e:
-                # st.error(f"An error occurred: {e}")
-
+            
 st.markdown('</div>', unsafe_allow_html=True)
