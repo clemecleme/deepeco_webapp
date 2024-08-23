@@ -152,16 +152,16 @@ elif st.session_state.language in questions:
             except requests.exceptions.RequestException as e:
                 st.error(f"An error occurred: {e}")
             
-            try:
-                response = requests.post(f"{API_URL}/generate", json={"user_id": user_id})
-                st.write(f"Starts generation for user {"user_id": user_id}")
+            # try:
+                # response = requests.post(f"{API_URL}/generate", json={"user_id": user_id})
+                # st.write(f"Starts generation for user {"user_id": user_id}")
 
-                if response.status_code == 200:
-                    st.success('Data submitted successfully')
-                else:
-                    st.error('Error submitting data')
+                # if response.status_code == 200:
+                    # st.success('Data submitted successfully')
+                # else:
+                    # st.error('Error submitting data')
 
-            except requests.exceptions.RequestException as e:
-                st.error(f"An error occurred: {e}")
+            # except requests.exceptions.RequestException as e:
+                # st.error(f"An error occurred: {e}")
 
 st.markdown('</div>', unsafe_allow_html=True)
