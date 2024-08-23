@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import os
 from dotenv import load_dotenv
+import traceback
 
 load_dotenv()
 
@@ -150,9 +151,11 @@ elif st.session_state.language in questions:
                 
                 else:
                     st.error('Error submitting data')
+                    st.error(f'Error submitting data. Status code: {response.status_code}')
         
             except requests.exceptions.RequestException as e:
                 st.error(f"An error occurred: {e}")
+                st.error(f"Error details: {traceback.format_exc()}")
             
             # try:
                 # response = requests.post(f"{API_URL}/generate", json={"user_id": user_id})
