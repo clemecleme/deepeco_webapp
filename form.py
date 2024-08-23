@@ -128,7 +128,7 @@ elif st.session_state.language in questions:
             try:
                 response = requests.post(f'{API_URL}/user_doc', json=user_data)
                 st.write(f"Sending request to: {API_URL}/users_doc")
-                st.write(f"Request payload: {json.dumps(user_data, indent=2)}")
+                # st.write(f"Request payload: {json.dumps(user_data, indent=2)}")
                 st.write(f"Response status code: {response.status_code}")
                 st.write(f"Response content: {response.text}")
 
