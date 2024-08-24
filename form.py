@@ -3,6 +3,7 @@ import requests
 import os
 from dotenv import load_dotenv
 import traceback
+import json
 
 load_dotenv()
 
@@ -122,18 +123,18 @@ elif st.session_state.language in questions:
                 "tech_relation": int(st.session_state.answers.get(questions[st.session_state.language][4], "")),
                 "email": str(st.session_state.answers.get(questions[st.session_state.language][5], ""))
             }
+
+            st.write(f"Response content : {user_data}")
             
             try:
                 response = requests.post(f'{API_URL}/user_doc', json=user_data)
                 st.write(f"Sending request to: {API_URL}/user_doc")
-                # st.write(f"Request payload: {json.dumps(user_data, indent=2)}")
                 st.write(f"Response status code: {response.status_code}")
                 st.write(f"Response content: {response.text}")
 
                 if response.status_code == 200:
                     st.success('Data submitted successfully')
                     response_data = response.json()
-                    user_id = response_data.get('id')
 
                     # Thank you message
                     thank_you_message = "Thanks, {}. Glad you're here. We'll begin shortly.".format(response["name"])
@@ -142,15 +143,13 @@ elif st.session_state.language in questions:
                     st.success(thank_you_message)
 
                     # Start experience generation
-                    if user_id:
-                        with st.spinner('Generating your experience...'):
-                            gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": user_id})
-                            if gen_response.status_code == 200:
-                                st.success('Experience generated successfully!')
-                            else:
-                                st.error('Error generating experience')
-                    else:
-                        st.error('User ID not received from server')                    
+                    user_id = response_data["user_id"]
+                    with st.spinner('Generating your experience...'):
+                        gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": user_id})
+                        if gen_response.status_code == 200:
+                            st.success('Experience generated successfully!')
+                        else:
+                            st.error('Error generating experience')
 
                     # Reset button
                     if st.button("Start New Session"):
@@ -168,5 +167,5 @@ elif st.session_state.language in questions:
                 st.error(f"Error details: {traceback.format_exc()}")
             
 
-            
+
 st.markdown('</div>', unsafe_allow_html=True)
