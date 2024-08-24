@@ -136,14 +136,8 @@ elif st.session_state.language in questions:
                     st.success('Data submitted successfully')
                     response_data = response.json()
 
-                    # Thank you message
-                    thank_you_message = "Thanks, {}. Glad you're here. We'll begin shortly.".format(response["name"])
-                    if st.session_state.language == "Chinese":
-                        thank_you_message = "谢谢你, {}。很高兴你来了。我们即将开始。".format(response["name"])
-                    st.success(thank_you_message)
-
                     # Start experience generation
-                    user_id = response_data["user_id"]
+                    user_id = response_data.get("user_id")
                     with st.spinner('Generating your experience...'):
                         gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": user_id})
                         if gen_response.status_code == 200:
@@ -151,13 +145,6 @@ elif st.session_state.language in questions:
                         else:
                             st.error('Error generating experience')
 
-                    # Reset button
-                    if st.button("Start New Session"):
-                        for key in ['language', 'answers']:
-                            if key in st.session_state:
-                                del st.session_state[key]
-                        st.rerun()
-                
                 else:
                     st.error('Error submitting data')
                     st.error(f'Error submitting data. Status code: {response.status_code}')
@@ -165,7 +152,23 @@ elif st.session_state.language in questions:
             except requests.exceptions.RequestException as e:
                 st.error(f"An error occurred: {e}")
                 st.error(f"Error details: {traceback.format_exc()}")
-            
+            except json.JSONDecodeError:
+                st.error("Error decoding JSON response")
+                st.error(f"Raw response: {response.text}")
+
+
+    # Thank you message
+    # thank_you_message = "Thanks, {}. Glad you're here. We'll begin shortly.".format(response["name"])
+    # if st.session_state.language == "Chinese":
+        # thank_you_message = "谢谢你, {}。很高兴你来了。我们即将开始。".format(response["name"])
+    # st.success(thank_you_message)
+
+    # Reset button (outside of the form)
+    if st.button("Start New Session"):
+        for key in ['language', 'answers']:
+            if key in st.session_state:
+                del st.session_state[key]
+        st.rerun()
 
 
 st.markdown('</div>', unsafe_allow_html=True)
