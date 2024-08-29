@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 import os
 from dotenv import load_dotenv
-import time
 
 load_dotenv()
 
@@ -122,43 +121,29 @@ elif st.session_state.language in questions and not st.session_state.form_submit
             }
             
             try:
+                # Call API create user document
                 response = requests.post(f'{API_URL}/user_doc', json=user_data)
                 if response.status_code == 200:
                     st.session_state.form_submitted = True
                     st.session_state.user_id = response.json().get("user_id")
-                    st.rerun()
-                else:
-                    st.markdown('Error submitting data. Please try again.')
+
+                    # Call API generate experience
+                    gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": st.session_state.user_id})
+                    if gen_response.status_code == 200:
+                        st.session_state.form_submitted = True
+                        st.session_state.user_id = user_id
+                        st.rerun()
             except requests.exceptions.RequestException:
                 st.markown("An error occurred. Please try again.")
 
 # After form submission
 elif st.session_state.form_submitted:
-    st.markdown(f"<h1 style='text-align: center;'>Deep Ecology u2p050</h1>", unsafe_allow_html=True)
     name = st.session_state.answers.get(questions[st.session_state.language][0], "")
     st.success(f"Thank you, {name}. We'll start soon.")
     
-    with st.spinner("Generating..."):
-        gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": st.session_state.user_id})
-        if gen_response.status_code == 200:
-            while True:
-                try:
-                    check_response = requests.get(f"{API_URL}/check_audio_files", params={"user_id": st.session_state.user_id})
-                    if check_response.status_code == 200:
-                        data = check_response.json()
-                        if data.get("audio_files_count", 0) == 6:
-                            st.success("Experience generated successfully!")
-                            break
-                    time.sleep(5)  # Wait for 5 seconds before checking again
-                except requests.exceptions.RequestException:
-                    st.markdown("<p style='color: grey;'>More info in the log.</p>", unsafe_allow_html=True)
-                    break
-        else:
-            st.markdown("<p style='color: grey;'>More info in the log.</p>", unsafe_allow_html=True)
-
-    # Reset button
-    if st.button("Start New Session"):
-        for key in ['language', 'answers', 'form_submitted', 'user_id']:
-            if key in st.session_state:
-                del st.session_state[key]
-        st.rerun()
+# Reset button
+if st.session_state.form_submitted and st.button("Start New Session"):
+    for key in ['language', 'answers', 'form_submitted', 'user_id']:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.rerun()
