@@ -79,6 +79,8 @@ if 'answers' not in st.session_state:
     st.session_state.answers = {}
 if 'form_submitted' not in st.session_state:
     st.session_state.form_submitted = False
+if 'generating' not in st.session_state:
+    st.session_state.generating = False
 
 # Main content area
 st.markdown('<div class="main-content">', unsafe_allow_html=True)
@@ -110,6 +112,10 @@ elif st.session_state.language in questions and not st.session_state.form_submit
         submit_button = st.form_submit_button("Submit")
         
         if submit_button:
+
+            st.session_state.generating = True
+            st.session_state.form_submitted = True
+
             # Prepare user data
             user_data = {
                 "language": st.session_state.language,
@@ -124,22 +130,28 @@ elif st.session_state.language in questions and not st.session_state.form_submit
                 # Call API create user document
                 response = requests.post(f'{API_URL}/user_doc', json=user_data)
                 if response.status_code == 200:
-                    st.session_state.form_submitted = True
                     st.session_state.user_id = response.json().get("user_id")
 
                     # Call API generate experience
                     gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": st.session_state.user_id})
                     if gen_response.status_code == 200:
-                        st.session_state.form_submitted = True
-                        st.session_state.user_id = user_id
-                        st.rerun()
+                        st.success("Experience generation started successfully!")
+                    else:
+                        st.error("Failed to start experience generation.")
+                else:
+                    st.error("Failed to create user document.")
             except requests.exceptions.RequestException:
-                st.markown("An error occurred. Please try again.")
+                st.error("An error occurred. Please try again.")
+            
+            st.session_state.generating = False
 
 # After form submission
-elif st.session_state.form_submitted:
-    name = st.session_state.answers.get(questions[st.session_state.language][0], "")
-    st.success(f"Thank you, {name}. We'll start soon.")
+if st.session_state.form_submitted:
+    if st.session_state.generating:
+        st.info("Generating experience...")
+    else:
+        name = st.session_state.answers.get(questions[st.session_state.language][0], "")
+        st.success(f"Thank you, {name}. We'll start soon.")
     
 # Reset button
 if st.session_state.form_submitted and st.button("Start New Session"):
