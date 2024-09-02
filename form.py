@@ -52,21 +52,6 @@ st.markdown("""
         padding: 20px;
         box-sizing: border-box;
     }
-    /* Ensure text is visible on all backgrounds */
-    .stTextInput > div > div > input::placeholder {
-        color: rgba(255, 255, 255, 0.5);
-    }
-    .stSelectbox > div > div > div {
-        color: #FFFFFF;
-    }
-    .stSlider > div > div > div > div {
-        color: #FFFFFF;
-    }
-    /* Improve visibility of success messages */
-    .element-container div[data-testid="stText"] {
-        color: #4CAF50;
-        font-weight: bold;
-    }
     </style>
     """, unsafe_allow_html=True)
 
