@@ -15,42 +15,40 @@ st.set_page_config(page_title="Deep Ecology u2p050", layout="centered", initial_
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
-    
+
+    /* Global dark background */
     body {
         color: #FFFFFF;
         background-color: #0E1117;
     }
     .stApp {
         background-color: #0E1117;
+    }            
+    body {
+        font-family: 'Roboto', sans-serif;
+    }
+    .stButton > button {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #FFFFFF;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: 300;
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        background-color: rgba(255, 255, 255, 0.2);
     }
     .stTextInput > div > div > input {
         color: #FFFFFF;
         background-color: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
-    .stSelectbox > div > div > div {
-        color: #FFFFFF;
-        background-color: #0E1117;
-    }
-    .stSlider > div > div > div > div {
-        color: #FFFFFF;
-    }
-    .stButton > button {
-        color: #FFFFFF;
-        background-color: rgba(255, 255, 255, 0.1);
-        border: none;
-    }
-    .stButton > button:hover {
-        background-color: rgba(255, 255, 255, 0.2);
-    }
-    h1, h2, h3, p, label {
-        color: #FFFFFF !important;
-    }
-    .stTextInput > div > div > input::placeholder {
-        color: rgba(255, 255, 255, 0.5);
-    }
-    .stAlert > div {
-        color: #0E1117;
+    h1, h2, h3 {
+        font-weight: 300;
+        letter-spacing: 1px;
     }
     .main-content {
         display: flex;
@@ -60,10 +58,15 @@ st.markdown("""
         padding: 20px;
         box-sizing: border-box;
     }
-    /* Improve visibility of success messages */
-    .element-container div[data-testid="stText"] {
-        color: #4CAF50 !important;
-        font-weight: bold;
+    /* Additional styles to ensure visibility */
+    .stTextInput > div > div > input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+    .stSelectbox > div > div > div {
+        color: #FFFFFF;
+    }
+    .stSlider > div > div > div > div {
+        color: #FFFFFF;
     }
     </style>
     """, unsafe_allow_html=True)
