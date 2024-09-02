@@ -111,9 +111,12 @@ if 'form_submitted' not in st.session_state:
     st.session_state.form_submitted = False
 if 'completion_message' not in st.session_state:
     st.session_state.completion_message = None
+if 'process_complete' not in st.session_state:
+    st.session_state.process_complete = False
 
-async def run_api_calls(user_data):
+def run_api_calls(user_data):
     try:
+        st.session_state.process_complete = False
         response = requests.post(f'{API_URL}/user_doc', json=user_data)
         if response.status_code == 200:
             user_id = response.json().get("user_id")
@@ -122,14 +125,15 @@ async def run_api_calls(user_data):
                 result = gen_response.json()
                 if result.get("completed"):
                     st.session_state.completion_message = f"Experience completed for {user_data['name']}"
-                    st.rerun()
+                    st.session_state.process_complete = True
     except Exception as e:
-        pass  # Silently handle any errors
+        st.error(f"An error occurred: {str(e)}")
+    finally:
+        st.session_state.process_complete = True
 
-def start_async_api_calls(user_data):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(run_api_calls(user_data))
+def start_api_calls(user_data):
+    thread = threading.Thread(target=run_api_calls, args=(user_data,))
+    thread.start()
 
 # Main content area
 st.markdown('<div class="main-content">', unsafe_allow_html=True)
@@ -181,20 +185,25 @@ if st.session_state.form_submitted:
     name = st.session_state.answers.get(questions[st.session_state.language][0], "")
     st.success(f"Thank you, {name}. We'll start soon.")
     
-    # Display spinner until completion message is available
-    if not st.session_state.completion_message:
+    if not st.session_state.process_complete:
         with st.spinner("Generating experience..."):
-            while not st.session_state.completion_message:
+            while not st.session_state.process_complete:
                 time.sleep(1)
                 st.rerun()
     
-    # Display completion message when available
     if st.session_state.completion_message:
         st.success(st.session_state.completion_message)
-    
+    elif st.session_state.process_complete:
+        st.warning("Process completed, but no completion message was set.")
+
+    # Debugging information
+    st.write("Debug Info:")
+    st.write(f"Process Complete: {st.session_state.process_complete}")
+    st.write(f"Completion Message: {st.session_state.completion_message}")
+
 # Reset button
 if st.session_state.form_submitted and st.button("Start New Session"):
-    for key in ['language', 'answers', 'form_submitted', 'completion_message']:
+    for key in ['language', 'answers', 'form_submitted', 'completion_message', 'process_complete']:
         if key in st.session_state:
             del st.session_state[key]
     st.rerun()
