@@ -125,17 +125,17 @@ def run_api_calls(user_data):
             user_id = response.json().get("user_id")
             
             # Generate experience
-            gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": user_id})
+            gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": user_id}, timeout=300)
             if gen_response.status_code == 200:
                 result = gen_response.json()
                 if result.get("status") == "success":
                     return f"Experience completed for {user_data['name']}"
                 else:
-                    return "Experience generation failed"
+                    return f"Experience generation failed: {result.get('message', 'Unknown error')}"
             else:
-                return "Error in generate_experience API call"
+                return f"Error in generate_experience API call: {gen_response.status_code}"
         else:
-            return "Error in creating user document"
+            return f"Error in creating user document: {response.status_code}"
     except Exception as e:
         return f"An error occurred: {str(e)}"
 
