@@ -9,7 +9,7 @@ load_dotenv()
 API_URL = os.getenv('API_URL')
 
 # Set page config
-st.set_page_config(page_title="Deep Ecology u2p050", layout="centered", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Deep Ecology u2p050", layout="centered", initial_sidebar_state="collapsed", theme="dark")
 
 # Custom CSS (unchanged)
 st.markdown("""
@@ -51,6 +51,21 @@ st.markdown("""
         justify-content: center;
         padding: 20px;
         box-sizing: border-box;
+    }
+    /* Ensure text is visible on all backgrounds */
+    .stTextInput > div > div > input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+    .stSelectbox > div > div > div {
+        color: #FFFFFF;
+    }
+    .stSlider > div > div > div > div {
+        color: #FFFFFF;
+    }
+    /* Improve visibility of success messages */
+    .element-container div[data-testid="stText"] {
+        color: #4CAF50;
+        font-weight: bold;
     }
     </style>
     """, unsafe_allow_html=True)
