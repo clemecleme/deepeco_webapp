@@ -112,30 +112,34 @@ if 'answers' not in st.session_state:
     st.session_state.answers = {}
 if 'form_submitted' not in st.session_state:
     st.session_state.form_submitted = False
+if 'generation_complete' not in st.session_state:
+    st.session_state.generation_complete = False
 if 'completion_message' not in st.session_state:
     st.session_state.completion_message = None
-if 'process_complete' not in st.session_state:
-    st.session_state.process_complete = False
 
 def run_api_calls(user_data):
     try:
-        st.session_state.process_complete = False
+        # Create user document
         response = requests.post(f'{API_URL}/user_doc', json=user_data)
         if response.status_code == 200:
             user_id = response.json().get("user_id")
+            
+            # Generate experience
             gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": user_id})
             if gen_response.status_code == 200:
                 result = gen_response.json()
-                if result.get("completed"):
+                if result.get("status") == "success":
                     st.session_state.completion_message = f"Experience completed for {user_data['name']}"
+                else:
+                    st.session_state.completion_message = "Experience generation failed"
+            else:
+                st.session_state.completion_message = "Error in generate_experience API call"
+        else:
+            st.session_state.completion_message = "Error in creating user document"
     except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
+        st.session_state.completion_message = f"An error occurred: {str(e)}"
     finally:
-        st.session_state.process_complete = True
-
-def start_api_calls(user_data):
-    thread = threading.Thread(target=run_api_calls, args=(user_data,))
-    thread.start()
+        st.session_state.generation_complete = True
 
 # Main content area
 st.markdown('<div class="main-content">', unsafe_allow_html=True)
@@ -168,43 +172,35 @@ elif st.session_state.language in questions and not st.session_state.form_submit
         
         if submit_button:
             st.session_state.form_submitted = True
-            user_data = {
-                "language": st.session_state.language,
-                "name": str(st.session_state.answers.get(questions[st.session_state.language][0], "")),
-                "age": int(st.session_state.answers.get(questions[st.session_state.language][1], 0)),
-                "country": str(st.session_state.answers.get(questions[st.session_state.language][2], "")),
-                "profession": str(st.session_state.answers.get(questions[st.session_state.language][3], "")),
-                "tech_relation": int(st.session_state.answers.get(questions[st.session_state.language][4], 5))
-            }
-            
-            # Start API calls in a separate thread
-            start_api_calls(user_data)
             st.rerun()
 
 # After form submission
-if st.session_state.form_submitted:
+if st.session_state.form_submitted and not st.session_state.generation_complete:
     name = st.session_state.answers.get(questions[st.session_state.language][0], "")
     st.success(f"Thank you, {name}. We'll start soon.")
     
-    if not st.session_state.process_complete:
-        with st.spinner("Generating experience..."):
-            while not st.session_state.process_complete:
-                time.sleep(1)
-                st.rerun()
+    user_data = {
+        "language": st.session_state.language,
+        "name": name,
+        "age": int(st.session_state.answers.get(questions[st.session_state.language][1], 0)),
+        "country": str(st.session_state.answers.get(questions[st.session_state.language][2], "")),
+        "profession": str(st.session_state.answers.get(questions[st.session_state.language][3], "")),
+        "tech_relation": int(st.session_state.answers.get(questions[st.session_state.language][4], 5))
+    }
     
+    with st.spinner("Generating experience..."):
+        run_api_calls(user_data)
+    st.rerun()
+
+if st.session_state.generation_complete:
     if st.session_state.completion_message:
         st.success(st.session_state.completion_message)
-    elif st.session_state.process_complete:
+    else:
         st.warning("Process completed, but no completion message was set.")
-
-    # Debugging information
-    st.write("Debug Info:")
-    st.write(f"Process Complete: {st.session_state.process_complete}")
-    st.write(f"Completion Message: {st.session_state.completion_message}")
 
 # Reset button
 if st.session_state.form_submitted and st.button("Start New Session"):
-    for key in ['language', 'answers', 'form_submitted', 'completion_message', 'process_complete']:
+    for key in ['language', 'answers', 'form_submitted', 'generation_complete', 'completion_message']:
         if key in st.session_state:
             del st.session_state[key]
     st.rerun()
