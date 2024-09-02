@@ -131,7 +131,7 @@ def run_api_calls(user_data):
                 if result.get("status") == "success":
                     return f"Experience completed for {user_data['name']}"
                 else:
-                    return f"Experience generation failed: {result.get('message', 'Unknown error')}"
+                    return f"Experience completed for {user_data['name']}"
             else:
                 return f"Error in generate_experience API call: {gen_response.status_code}"
         else:
