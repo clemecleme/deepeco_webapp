@@ -114,6 +114,8 @@ if 'form_submitted' not in st.session_state:
     st.session_state.form_submitted = False
 if 'generation_complete' not in st.session_state:
     st.session_state.generation_complete = False
+if 'completion_message' not in st.session_state:
+    st.session_state.completion_message = None
 
 def run_api_calls(user_data):
     try:
@@ -185,15 +187,18 @@ if st.session_state.form_submitted and not st.session_state.generation_complete:
     }
     
     with st.spinner("Generating experience..."):
-        completion_message = run_api_calls(user_data)
+        st.session_state.completion_message = run_api_calls(user_data)
     
     st.session_state.generation_complete = True
-    st.success(completion_message)
     st.rerun()
+
+# Display completion message
+if st.session_state.generation_complete:
+    st.success(st.session_state.completion_message)
 
 # Reset button
 if st.session_state.generation_complete and st.button("Start New Session"):
-    for key in ['language', 'answers', 'form_submitted', 'generation_complete']:
+    for key in ['language', 'answers', 'form_submitted', 'generation_complete', 'completion_message']:
         if key in st.session_state:
             del st.session_state[key]
     st.rerun()
