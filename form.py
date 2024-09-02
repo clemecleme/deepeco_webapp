@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import os
 from dotenv import load_dotenv
+import asyncio
 import threading
 
 load_dotenv()
@@ -11,11 +12,11 @@ API_URL = os.getenv('API_URL')
 # Set page config
 st.set_page_config(page_title="Deep Ecology u2p050", layout="centered", initial_sidebar_state="collapsed")
 
-# Custom CSS (unchanged)
+# Custom CSS with improved visibility
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
-
+    
     /* Global dark background */
     body {
         color: #FFFFFF;
@@ -23,13 +24,23 @@ st.markdown("""
     }
     .stApp {
         background-color: #0E1117;
-    }            
-    body {
-        font-family: 'Roboto', sans-serif;
     }
+    
+    /* Improved text visibility */
+    body, p, .stTextInput > div > div > input, .stSelectbox, .stSlider {
+        color: #FFFFFF !important;
+    }
+    
+    /* Form input styling */
+    .stTextInput > div > div > input {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    /* Button styling */
     .stButton > button {
         background-color: rgba(255, 255, 255, 0.1);
-        color: #FFFFFF;
+        color: #FFFFFF !important;
         border: none;
         border-radius: 5px;
         padding: 10px 20px;
@@ -41,15 +52,15 @@ st.markdown("""
     .stButton > button:hover {
         background-color: rgba(255, 255, 255, 0.2);
     }
-    .stTextInput > div > div > input {
-        color: #FFFFFF;
-        background-color: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
+    
+    /* Headers */
     h1, h2, h3 {
         font-weight: 300;
         letter-spacing: 1px;
+        color: #FFFFFF !important;
     }
+    
+    /* Main content layout */
     .main-content {
         display: flex;
         flex-direction: column;
@@ -58,15 +69,16 @@ st.markdown("""
         padding: 20px;
         box-sizing: border-box;
     }
-    /* Additional styles to ensure visibility */
+    
+    /* Additional styles for better visibility */
     .stTextInput > div > div > input::placeholder {
-        color: rgba(255, 255, 255, 0.5);
+        color: rgba(255, 255, 255, 0.5) !important;
     }
     .stSelectbox > div > div > div {
-        color: #FFFFFF;
+        color: #FFFFFF !important;
     }
     .stSlider > div > div > div > div {
-        color: #FFFFFF;
+        color: #FFFFFF !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -96,10 +108,10 @@ if 'answers' not in st.session_state:
     st.session_state.answers = {}
 if 'form_submitted' not in st.session_state:
     st.session_state.form_submitted = False
-if 'generating' not in st.session_state:
-    st.session_state.generating = False
+if 'completion_message' not in st.session_state:
+    st.session_state.completion_message = None
 
-def run_api_calls(user_data):
+async def run_api_calls(user_data):
     try:
         response = requests.post(f'{API_URL}/user_doc', json=user_data)
         if response.status_code == 200:
@@ -108,14 +120,20 @@ def run_api_calls(user_data):
             if gen_response.status_code == 200:
                 result = gen_response.json()
                 if result.get("completed"):
-                    st.session_state.completion_message = f"Experience completed for {result['name']}"
+                    st.session_state.completion_message = f"Experience completed for {user_data['name']}"
+                    st.rerun()
     except Exception as e:
         pass  # Silently handle any errors
+
+def start_async_api_calls(user_data):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(run_api_calls(user_data))
 
 # Main content area
 st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
-# Language selection
+# Language selection and form (unchanged)
 if st.session_state.language is None:
     st.markdown("<h1 style='text-align: center;'>Select your language</h1>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
@@ -128,7 +146,6 @@ if st.session_state.language is None:
             st.session_state.language = "Chinese"
             st.rerun()
 
-# Form
 elif st.session_state.language in questions and not st.session_state.form_submitted:
     st.markdown(f"<h1 style='text-align: center;'>Deep Ecology u2p050</h1>", unsafe_allow_html=True)
     
@@ -143,8 +160,6 @@ elif st.session_state.language in questions and not st.session_state.form_submit
         
         if submit_button:
             st.session_state.form_submitted = True
-
-            # Prepare user data
             user_data = {
                 "language": st.session_state.language,
                 "name": str(st.session_state.answers.get(questions[st.session_state.language][0], "")),
@@ -155,7 +170,7 @@ elif st.session_state.language in questions and not st.session_state.form_submit
             }
             
             # Start API calls in a separate thread
-            thread = threading.Thread(target=run_api_calls, args=(user_data,))
+            thread = threading.Thread(target=start_async_api_calls, args=(user_data,))
             thread.start()
 
             st.rerun()
@@ -163,13 +178,24 @@ elif st.session_state.language in questions and not st.session_state.form_submit
 # After form submission
 if st.session_state.form_submitted:
     name = st.session_state.answers.get(questions[st.session_state.language][0], "")
-    st.write(f"Thank you, {name}. We'll start soon.")
+    st.success(f"Thank you, {name}. We'll start soon.")
     
-    # Reset button
-    if st.button("Start New Form"):
-        for key in ['language', 'answers', 'form_submitted', 'user_id']:
-            if key in st.session_state:
-                del st.session_state[key]
-        st.rerun()
+    # Display spinner until completion message is available
+    if not st.session_state.completion_message:
+        with st.spinner("Generating experience..."):
+            while not st.session_state.completion_message:
+                time.sleep(1)
+                st.rerun()
+    
+    # Display completion message when available
+    if st.session_state.completion_message:
+        st.success(st.session_state.completion_message)
+    
+# Reset button
+if st.session_state.form_submitted and st.button("Start New Session"):
+    for key in ['language', 'answers', 'form_submitted', 'completion_message']:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
