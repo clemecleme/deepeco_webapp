@@ -125,7 +125,7 @@ def run_api_calls(user_data):
             user_id = response.json().get("user_id")
             
             # Generate experience
-            gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": user_id}, timeout=300)
+            gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": user_id}, timeout=600)
             if gen_response.status_code == 200:
                 result = gen_response.json()
                 if result.get("status") == "success":
