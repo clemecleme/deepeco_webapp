@@ -13,7 +13,7 @@ API_URL = os.getenv('API_URL')
 # Set page config
 st.set_page_config(page_title="Deep Ecology u2p050", layout="centered", initial_sidebar_state="collapsed")
 
-# Custom CSS with improved visibility
+# Custom CSS with improved visibility and black background for form boxes
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
@@ -22,6 +22,7 @@ st.markdown("""
     body {
         color: #FFFFFF;
         background-color: #0E1117;
+        font-family: 'Roboto', sans-serif;
     }
     .stApp {
         background-color: #0E1117;
@@ -32,10 +33,11 @@ st.markdown("""
         color: #FFFFFF !important;
     }
     
-    /* Form input styling */
+    /* Form input styling with black background */
     .stTextInput > div > div > input {
-        background-color: rgba(255, 255, 255, 0.1) !important;
+        background-color: #000000 !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: #FFFFFF !important;
     }
     
     /* Button styling */
@@ -77,6 +79,7 @@ st.markdown("""
     }
     .stSelectbox > div > div > div {
         color: #FFFFFF !important;
+        background-color: #000000 !important;
     }
     .stSlider > div > div > div > div {
         color: #FFFFFF !important;
@@ -84,7 +87,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Questions (unchanged)
+# Questions
 questions = {
     "English": [
         "What is your name?",
@@ -125,7 +128,6 @@ def run_api_calls(user_data):
                 result = gen_response.json()
                 if result.get("completed"):
                     st.session_state.completion_message = f"Experience completed for {user_data['name']}"
-                    st.session_state.process_complete = True
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
     finally:
@@ -138,7 +140,7 @@ def start_api_calls(user_data):
 # Main content area
 st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
-# Language selection and form (unchanged)
+# Language selection
 if st.session_state.language is None:
     st.markdown("<h1 style='text-align: center;'>Select your language</h1>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
@@ -151,6 +153,7 @@ if st.session_state.language is None:
             st.session_state.language = "Chinese"
             st.rerun()
 
+# Form
 elif st.session_state.language in questions and not st.session_state.form_submitted:
     st.markdown(f"<h1 style='text-align: center;'>Deep Ecology u2p050</h1>", unsafe_allow_html=True)
     
@@ -175,9 +178,7 @@ elif st.session_state.language in questions and not st.session_state.form_submit
             }
             
             # Start API calls in a separate thread
-            thread = threading.Thread(target=start_async_api_calls, args=(user_data,))
-            thread.start()
-
+            start_api_calls(user_data)
             st.rerun()
 
 # After form submission
