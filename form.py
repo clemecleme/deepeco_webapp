@@ -114,8 +114,6 @@ if 'form_submitted' not in st.session_state:
     st.session_state.form_submitted = False
 if 'generation_complete' not in st.session_state:
     st.session_state.generation_complete = False
-if 'completion_message' not in st.session_state:
-    st.session_state.completion_message = None
 
 def run_api_calls(user_data):
     try:
@@ -129,17 +127,15 @@ def run_api_calls(user_data):
             if gen_response.status_code == 200:
                 result = gen_response.json()
                 if result.get("status") == "success":
-                    st.session_state.completion_message = f"Experience completed for {user_data['name']}"
+                    return f"Experience completed for {user_data['name']}"
                 else:
-                    st.session_state.completion_message = "Experience generation failed"
+                    return "Experience generation failed"
             else:
-                st.session_state.completion_message = "Error in generate_experience API call"
+                return "Error in generate_experience API call"
         else:
-            st.session_state.completion_message = "Error in creating user document"
+            return "Error in creating user document"
     except Exception as e:
-        st.session_state.completion_message = f"An error occurred: {str(e)}"
-    finally:
-        st.session_state.generation_complete = True
+        return f"An error occurred: {str(e)}"
 
 # Main content area
 st.markdown('<div class="main-content">', unsafe_allow_html=True)
@@ -189,18 +185,15 @@ if st.session_state.form_submitted and not st.session_state.generation_complete:
     }
     
     with st.spinner("Generating experience..."):
-        run_api_calls(user_data)
+        completion_message = run_api_calls(user_data)
+    
+    st.session_state.generation_complete = True
+    st.success(completion_message)
     st.rerun()
 
-if st.session_state.generation_complete:
-    if st.session_state.completion_message:
-        st.success(st.session_state.completion_message)
-    else:
-        st.warning("Process completed, but no completion message was set.")
-
 # Reset button
-if st.session_state.form_submitted and st.button("Start New Session"):
-    for key in ['language', 'answers', 'form_submitted', 'generation_complete', 'completion_message']:
+if st.session_state.generation_complete and st.button("Start New Session"):
+    for key in ['language', 'answers', 'form_submitted', 'generation_complete']:
         if key in st.session_state:
             del st.session_state[key]
     st.rerun()
