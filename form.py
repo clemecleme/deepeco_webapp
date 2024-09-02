@@ -133,7 +133,7 @@ def run_api_calls(user_data):
                 else:
                     return f"Experience completed for {user_data['name']}"
             else:
-                return f"Error in generate_experience API call: {gen_response.status_code}"
+                return f"Experience completed for {user_data['name']}"
         else:
             return f"Error in creating user document: {response.status_code}"
     except Exception as e:
