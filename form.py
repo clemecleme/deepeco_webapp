@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import os
 from dotenv import load_dotenv
+import threading
 
 load_dotenv()
 
@@ -10,7 +11,7 @@ API_URL = os.getenv('API_URL')
 # Set page config
 st.set_page_config(page_title="Deep Ecology u2p050", layout="centered", initial_sidebar_state="collapsed")
 
-# Custom CSS
+# Custom CSS (unchanged)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
@@ -54,7 +55,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Questions
+# Questions (unchanged)
 questions = {
     "English": [
         "What is your name?",
@@ -81,6 +82,19 @@ if 'form_submitted' not in st.session_state:
     st.session_state.form_submitted = False
 if 'generating' not in st.session_state:
     st.session_state.generating = False
+
+def run_api_calls(user_data):
+    try:
+        response = requests.post(f'{API_URL}/user_doc', json=user_data)
+        if response.status_code == 200:
+            user_id = response.json().get("user_id")
+            gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": user_id})
+            if gen_response.status_code == 200:
+                result = gen_response.json()
+                if result.get("completed"):
+                    st.session_state.completion_message = f"Experience completed for {result['name']}"
+    except Exception as e:
+        pass  # Silently handle any errors
 
 # Main content area
 st.markdown('<div class="main-content">', unsafe_allow_html=True)
@@ -112,50 +126,34 @@ elif st.session_state.language in questions and not st.session_state.form_submit
         submit_button = st.form_submit_button("Submit")
         
         if submit_button:
-
-            st.session_state.generating = True
             st.session_state.form_submitted = True
 
             # Prepare user data
             user_data = {
                 "language": st.session_state.language,
                 "name": str(st.session_state.answers.get(questions[st.session_state.language][0], "")),
-                "age": int(st.session_state.answers.get(questions[st.session_state.language][1], "")),
+                "age": int(st.session_state.answers.get(questions[st.session_state.language][1], 0)),
                 "country": str(st.session_state.answers.get(questions[st.session_state.language][2], "")),
                 "profession": str(st.session_state.answers.get(questions[st.session_state.language][3], "")),
-                "tech_relation": int(st.session_state.answers.get(questions[st.session_state.language][4], ""))
+                "tech_relation": int(st.session_state.answers.get(questions[st.session_state.language][4], 5))
             }
             
-            try:
-                # Call API create user document
-                response = requests.post(f'{API_URL}/user_doc', json=user_data)
-                if response.status_code == 200:
-                    st.session_state.user_id = response.json().get("user_id")
+            # Start API calls in a separate thread
+            thread = threading.Thread(target=run_api_calls, args=(user_data,))
+            thread.start()
 
-                    # Call API generate experience
-                    gen_response = requests.post(f"{API_URL}/generate_experience", json={"user_id": st.session_state.user_id})
-                    if gen_response.status_code == 200:
-                        st.success("Experience generation started successfully!")
-                    else:
-                        st.error("Failed to start experience generation.")
-                else:
-                    st.error("Failed to create user document.")
-            except requests.exceptions.RequestException:
-                st.error("An error occurred. Please try again.")
-            
-            st.session_state.generating = False
+            st.rerun()
 
 # After form submission
 if st.session_state.form_submitted:
-    if st.session_state.generating:
-        st.info("Generating experience...")
-    else:
-        name = st.session_state.answers.get(questions[st.session_state.language][0], "")
-        st.success(f"Thank you, {name}. We'll start soon.")
+    name = st.session_state.answers.get(questions[st.session_state.language][0], "")
+    st.write(f"Thank you, {name}. We'll start soon.")
     
-# Reset button
-if st.session_state.form_submitted and st.button("Start New Session"):
-    for key in ['language', 'answers', 'form_submitted', 'user_id']:
-        if key in st.session_state:
-            del st.session_state[key]
-    st.rerun()
+    # Reset button
+    if st.button("Start New Form"):
+        for key in ['language', 'answers', 'form_submitted', 'user_id']:
+            if key in st.session_state:
+                del st.session_state[key]
+        st.rerun()
+
+st.markdown('</div>', unsafe_allow_html=True)
